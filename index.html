@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>X Extension Callback</title>
+</head>
+<body>
+    <script>
+        window.onload = function() {
+            if (window.opener) {
+                window.opener.postMessage({ 
+                    type: 'oauth-callback',
+                    payload: window.location.href 
+                }, '*');
+                window.close();
+            }
+        };
+    </script>
+    <h1>Authorization Complete</h1>
+    <p>You can close this window now.</p>
+</body>
+</html> 
