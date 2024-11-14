@@ -13,19 +13,53 @@
                 const currentUrl = window.location.href;
                 console.log('Callback URL received:', currentUrl);
                 
-                // Send message to extension
-                chrome.runtime.sendMessage('mfabfdnimhcpnkfkfpmdhcpfcgijadkb', {
-                    type: 'oauth-callback',
-                    payload: currentUrl
-                }, function(response) {
-                    if (response && response.success) {
-                        document.body.innerHTML = '<h1>Authorization Complete</h1><p>You can close this window now.</p>';
-                    } else {
-                        document.body.innerHTML = '<h1>Authorization Failed</h1><p>Please try again.</p>';
+                // Try different methods to communicate with the extension
+                function tryConnect() {
+                    // Method 1: Direct message
+                    try {
+                        chrome.runtime.sendMessage('mfabfdnimhcpnkfkfpmdhcpfcgijadkb', {
+                            type: 'oauth-callback',
+                            payload: currentUrl
+                        }, function(response) {
+                            if (chrome.runtime.lastError) {
+                                console.log('Method 1 failed:', chrome.runtime.lastError);
+                                // Try method 2
+                                tryPostMessage();
+                            } else if (response && response.success) {
+                                document.body.innerHTML = '<h1>Authorization Complete</h1><p>You can close this window now.</p>';
+                                setTimeout(() => window.close(), 2000);
+                            } else {
+                                document.body.innerHTML = '<h1>Authorization Failed</h1><p>Please try again.</p>';
+                            }
+                        });
+                    } catch (e) {
+                        console.log('Method 1 failed with error:', e);
+                        tryPostMessage();
                     }
-                    // Close the window after a short delay
-                    setTimeout(() => window.close(), 2000);
-                });
+                }
+
+                function tryPostMessage() {
+                    // Method 2: PostMessage to opener
+                    try {
+                        if (window.opener) {
+                            window.opener.postMessage({
+                                type: 'oauth-callback',
+                                payload: currentUrl
+                            }, '*');
+                            document.body.innerHTML = '<h1>Authorization Complete</h1><p>You can close this window now.</p>';
+                            setTimeout(() => window.close(), 2000);
+                        } else {
+                            document.body.innerHTML = '<h1>Authorization Failed</h1><p>Please try again. (No opener found)</p>';
+                        }
+                    } catch (e) {
+                        console.error('Both communication methods failed:', e);
+                        document.body.innerHTML = '<h1>Authorization Failed</h1><p>Please try again. (Communication error)</p>';
+                    }
+                }
+
+                // Start the connection attempt
+                tryConnect();
+
             } catch (error) {
                 document.body.innerHTML = '<h1>Error</h1><p>Failed to process authentication. Please try again.</p>';
                 console.error('Callback error:', error);
