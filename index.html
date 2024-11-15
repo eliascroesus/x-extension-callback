@@ -22,18 +22,19 @@
                             payload: currentUrl
                         }, function(response) {
                             if (chrome.runtime.lastError) {
-                                console.log('Method 1 failed:', chrome.runtime.lastError);
+                                console.error('Chrome runtime error:', chrome.runtime.lastError);
                                 // Try method 2
                                 tryPostMessage();
                             } else if (response && response.success) {
                                 document.body.innerHTML = '<h1>Authorization Complete</h1><p>You can close this window now.</p>';
                                 setTimeout(() => window.close(), 2000);
                             } else {
-                                document.body.innerHTML = '<h1>Authorization Failed</h1><p>Please try again.</p>';
+                                console.error('Response error:', response);
+                                document.body.innerHTML = `<h1>Authorization Failed</h1><p>Error: ${response?.error || 'Unknown error'}</p>`;
                             }
                         });
                     } catch (e) {
-                        console.log('Method 1 failed with error:', e);
+                        console.error('Method 1 failed with error:', e);
                         tryPostMessage();
                     }
                 }
