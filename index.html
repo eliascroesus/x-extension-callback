@@ -13,6 +13,17 @@
                 const currentUrl = window.location.href;
                 console.log('Callback URL received:', currentUrl);
                 
+                // Parse URL parameters for better error logging
+                const url = new URL(currentUrl);
+                const error = url.searchParams.get('error');
+                const error_description = url.searchParams.get('error_description');
+                
+                if (error || error_description) {
+                    console.error('OAuth error:', error, error_description);
+                    document.body.innerHTML = `<h1>Authorization Failed</h1><p>Error: ${error_description || error || 'Unknown error'}</p>`;
+                    return;
+                }
+                
                 // Try different methods to communicate with the extension
                 function tryConnect() {
                     // Method 1: Direct message
@@ -21,9 +32,9 @@
                             type: 'oauth-callback',
                             payload: currentUrl
                         }, function(response) {
+                            console.log('Response from extension:', response);
                             if (chrome.runtime.lastError) {
                                 console.error('Chrome runtime error:', chrome.runtime.lastError);
-                                // Try method 2
                                 tryPostMessage();
                             } else if (response && response.success) {
                                 document.body.innerHTML = '<h1>Authorization Complete</h1><p>You can close this window now.</p>';
